@@ -38,3 +38,5 @@ async def send_email(email: EmailStr, username: str, host: str):
         await fm.send_message(message, template_name="email_template.html")
     except ConnectionErrors as err:
         print(err)
+
+print(f"Template Folder Path: {conf.TEMPLATE_FOLDER}")

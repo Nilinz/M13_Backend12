@@ -12,6 +12,8 @@ from . import users
 from fastapi_limiter import FastAPILimiter
 from fastapi_limiter.depends import RateLimiter
 from conf.config import settings
+import redis
+from aioredis import from_url
 
 Base.metadata.create_all(bind=engine)
 app = FastAPI()
@@ -31,8 +33,7 @@ app.add_middleware(
 
 @app.on_event("startup")
 async def startup():
-    r = await redis.Redis(host=settings.redis_host, port=settings.redis_port, db=0, encoding="utf-8",
-                          decode_responses=True)
+    r = await from_url(f"redis://{settings.redis_host}:{settings.redis_port}/0", encoding="utf-8")
     await FastAPILimiter.init(r)
 
 @app.get("/")

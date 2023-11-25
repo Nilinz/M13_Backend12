@@ -5,10 +5,9 @@ import cloudinary.uploader
 
 from .db import get_db
 from .models import User
-import users as repository_users
 from services.auth import auth_service
 from conf.config import settings
-from schemas import UserDb
+from .schemas import UserDb, UserModel
 
 router = APIRouter(prefix="/users", tags=["users"])
 

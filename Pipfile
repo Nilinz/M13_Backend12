@@ -19,6 +19,8 @@ fastapi = {extras = ["all"], version = "*"}
 fastapi-limiter = "*"
 cloudinary = "*"
 pydantic-settings = "*"
+redis = "*"
+aioredis = "*"
 
 [dev-packages]
 
