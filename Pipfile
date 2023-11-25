@@ -16,6 +16,9 @@ psycopg2 = "*"
 fastapi-mail = "*"
 python-dotenv = "*"
 fastapi = {extras = ["all"], version = "*"}
+fastapi-limiter = "*"
+cloudinary = "*"
+pydantic-settings = "*"
 
 [dev-packages]
 

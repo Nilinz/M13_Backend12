@@ -8,12 +8,18 @@ from pydantic import BaseModel
 from . import models, schemas, db
 from .db import get_db, Base, engine
 from routes import auth
+from . import users
+from fastapi_limiter import FastAPILimiter
+from fastapi_limiter.depends import RateLimiter
+from conf.config import settings
 
 Base.metadata.create_all(bind=engine)
 app = FastAPI()
 security = HTTPBearer()
 
-app.include_router(auth.router)
+app.include_router(auth.router, prefix='/api')
+app.include_router(users.router, prefix='/api')
+
 # Enable CORS for all origins
 app.add_middleware(
     CORSMiddleware,
@@ -23,14 +29,19 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.on_event("startup")
+async def startup():
+    r = await redis.Redis(host=settings.redis_host, port=settings.redis_port, db=0, encoding="utf-8",
+                          decode_responses=True)
+    await FastAPILimiter.init(r)
 
 @app.get("/")
 async def root():
     return {"message": "Hello World"}
 
 
-@app.post("/contacts/", response_model=schemas.Contact, status_code=status.HTTP_201_CREATED)
-def create_contact(contact: schemas.ContactCreate, db: Session = Depends(get_db)):
+@app.post("/contacts/", response_model=schemas.Contact, description='No more than 10 requests per minute', dependencies=[Depends(RateLimiter(times=10, seconds=60))], status_code=status.HTTP_201_CREATED)
+def create_contact(contact: schemas.ContactCreate,skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     db_contact = models.Contact(**contact.dict())
     db.add(db_contact)
     db.commit()

@@ -9,13 +9,16 @@ from sqlalchemy.orm import Session
 from app.db import get_db
 from app import users as repository_users
 from app.models import User
+import pickle
+from conf.config import settings
 
 class Auth:
     pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-    SECRET_KEY = "secret_key"
-    ALGORITHM = "HS256"
+    SECRET_KEY = settings.secret_key
+    ALGORITHM = settings.algorithm
     oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
-
+    r = redis.Redis(host=settings.redis_host, port=settings.redis_port, db=0)
+    
     def verify_password(self, plain_password, hashed_password):
         return self.pwd_context.verify(plain_password, hashed_password)
 
@@ -60,6 +63,7 @@ class Auth:
         )
 
         try:
+            # Decode JWT
             payload = jwt.decode(token, self.SECRET_KEY, algorithms=[self.ALGORITHM])
             if payload['scope'] == 'access_token':
                 email = payload["sub"]
@@ -70,11 +74,21 @@ class Auth:
         except JWTError as e:
             raise credentials_exception
 
-        user = db.query(User).filter(User.email == email).first()
+        user = self.r.get(f"user:{email}")
+
         if user is None:
-            raise credentials_exception
+            user = await repository_users.get_user_by_email(email, db)
+
+            if user is None:
+                raise credentials_exception
+
+            self.r.set(f"user:{email}", pickle.dumps(user))
+            self.r.expire(f"user:{email}", 900)
+        else:
+            user = pickle.loads(user)
+
         return user
-    
+
     def create_email_token(self, data: dict):
         to_encode = data.copy()
         expire = datetime.utcnow() + timedelta(days=7)
@@ -90,7 +104,7 @@ class Auth:
         except JWTError as e:
             print(e)
             raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                          detail="Invalid token for email verification")
+                                detail="Invalid token for email verification")
 
 
 auth_service = Auth()
