@@ -1,5 +1,5 @@
 from typing import List, Optional
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, EmailStr
 from datetime import datetime, date
 
 
@@ -84,3 +84,7 @@ class ContactSearch(BaseModel):
 
 class ContactBirthdaySearch(BaseModel):
     days: int
+
+
+class RequestEmail(BaseModel):
+    email: EmailStr

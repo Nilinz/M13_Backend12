@@ -6,9 +6,10 @@ from datetime import timedelta
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from . import models, schemas, db
-from .db import get_db
+from .db import get_db, Base, engine
 from routes import auth
 
+Base.metadata.create_all(bind=engine)
 app = FastAPI()
 security = HTTPBearer()
 

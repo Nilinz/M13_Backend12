@@ -6,12 +6,10 @@ from fastapi import FastAPI, BackgroundTasks
 from fastapi_mail import FastMail, MessageSchema, ConnectionConfig, MessageType
 from pydantic import EmailStr, BaseModel
 from typing import List
+from app.db import Base, engine
 
 env_path = Path('.') / '.env'
 load_dotenv(dotenv_path=env_path)
-
-class EmailSchema(BaseModel):
-    email: EmailStr
 
 
 
@@ -32,22 +30,22 @@ conf = ConnectionConfig(
 
 app = FastAPI()
 
+# @app.post("/send-email")
+# async def send_in_background(background_tasks: BackgroundTasks, body: EmailSchema):
+#     message = MessageSchema(
+#         subject="Fastapi mail module",
+#         recipients=[body.email],
+#         template_body={"fullname": "Billy Jones"},
+#         subtype=MessageType.html
+#     )
 
-@app.post("/send-email")
-async def send_in_background(background_tasks: BackgroundTasks, body: EmailSchema):
-    message = MessageSchema(
-        subject="Fastapi mail module",
-        recipients=[body.email],
-        template_body={"fullname": "Billy Jones"},
-        subtype=MessageType.html
-    )
+#     fm = FastMail(conf)
 
-    fm = FastMail(conf)
+#     background_tasks.add_task(fm.send_message, message, template_name="example_email.html")
 
-    background_tasks.add_task(fm.send_message, message, template_name="example_email.html")
-
-    return {"message": "email has been sent"}
+#     return {"message": "email has been sent"}
 
 
 if __name__ == '__main__':
+    Base.metadata.create_all(bind=engine)
     uvicorn.run('main:app', port=8000, reload=True)

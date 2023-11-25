@@ -9,13 +9,13 @@ python-jose = {extras = ["cryptography"], version = "*"}
 passlib = {extras = ["bcrypt"], version = "*"}
 python-multipart = "*"
 alembic = "*"
-fastapi = "*"
 pydantic = "*"
 uvicorn = "*"
 sqlalchemy = "*"
 psycopg2 = "*"
 fastapi-mail = "*"
 python-dotenv = "*"
+fastapi = {extras = ["all"], version = "*"}
 
 [dev-packages]
 
